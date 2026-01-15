@@ -1,0 +1,41 @@
+{
+  "name": "@tracker/backend",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "nodemon --exec ts-node -r tsconfig-paths/register src/app.ts",
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "dev:startEventListeners": "nodemon --exec ts-node -r tsconfig-paths/register src/web3/eventListener.ts",
+    "typechain": "typechain --target ethers-v6 ./src/web3/*.json --out-dir src/types"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "devDependencies": {
+    "@typechain/ethers-v6": "^0.5.1",
+    "@types/amqplib": "^0.10.8",
+    "@types/dotenv": "^8.2.3",
+    "@types/express": "^5.0.6",
+    "@types/joi": "^17.2.3",
+    "@types/node": "^25.0.6",
+    "@types/redis": "^4.0.11",
+    "nodemon": "^3.1.11",
+    "ts-node": "^10.9.2",
+    "tsconfig-paths": "^4.2.0",
+    "typescript": "^5.9.3"
+  },
+  "dependencies": {
+    "@randomoutputs.com/random-sentence": "^1.0.2",
+    "amqplib": "^0.10.9",
+    "dotenv": "^17.2.3",
+    "ethers": "^6.16.0",
+    "express": "^5.2.1",
+    "joi": "^18.0.2",
+    "redis": "^5.10.0",
+    "typechain": "^8.3.2"
+  }
+}
