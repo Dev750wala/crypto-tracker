@@ -127,22 +127,22 @@ export class EventListener {
         for (const e of allEvents) {
           if (e.eventName === eventsNames.TRANSFER) {
             const args = e.args as TransferEvent.OutputObject;
-            // console.log("HIST Transfer", {
-            //   blockNumber: e.blockNumber,
-            //   txHash: e.transactionHash,
-            //   from: args.from,
-            //   to: args.to,
-            //   value: args.value.toString(),
-            // });
+            console.log("HIST Transfer", {
+              blockNumber: e.blockNumber,
+              txHash: e.transactionHash,
+              from: args.from,
+              to: args.to,
+              value: args.value.toString(),
+            });
           } else if (e.eventName === eventsNames.APPROVAL) {
             const args = e.args as unknown as ApprovalEvent.OutputObject;
-            // console.log("HIST Approval", {
-            //   blockNumber: e.blockNumber,
-            //   txHash: e.transactionHash,
-            //   owner: args.owner,
-            //   spender: args.spender,
-            //   value: args.value.toString(),
-            // });
+            console.log("HIST Approval", {
+              blockNumber: e.blockNumber,
+              txHash: e.transactionHash,
+              owner: args.owner,
+              spender: args.spender,
+              value: args.value.toString(),
+            });
           } else {
             console.log("HIST Unknown event", e.eventName, e.topics);
           }
@@ -170,12 +170,7 @@ export class EventListener {
         try {
           const ev = cbArgs[cbArgs.length - 1];
 
-          // const bigintReplacer = (_key: string, value: any) => {
-          //   return typeof value === 'bigint' ? value.toString() : value;
-          // };
-
           if (eventName === eventsNames.TRANSFER) {
-            // console.log("LIVE Transfer:", JSON.stringify(ev, bigintReplacer));
             const args = ev.args as TransferEvent.OutputObject;
             console.log("LIVE Transfer", {
               blockNumber: ev.log.blockNumber,

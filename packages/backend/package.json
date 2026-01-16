@@ -17,7 +17,7 @@
   "type": "commonjs",
   "devDependencies": {
     "@typechain/ethers-v6": "^0.5.1",
-    "@types/amqplib": "^0.10.8",
+    "@types/amqplib": "0.10.6",
     "@types/dotenv": "^8.2.3",
     "@types/express": "^5.0.6",
     "@types/joi": "^17.2.3",
@@ -30,7 +30,7 @@
   },
   "dependencies": {
     "@randomoutputs.com/random-sentence": "^1.0.2",
-    "amqplib": "^0.10.9",
+    "amqplib": "0.10.5",
     "dotenv": "^17.2.3",
     "ethers": "^6.16.0",
     "express": "^5.2.1",
