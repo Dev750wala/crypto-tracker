@@ -1,3 +1,3 @@
-const bigintReplacer = (_key: string, value: any) => {
+export const replacer = (_key: string, value: any) => {
   return typeof value === 'bigint' ? value.toString() : value;
 };

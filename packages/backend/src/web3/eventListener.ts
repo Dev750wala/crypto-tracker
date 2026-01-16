@@ -7,6 +7,9 @@ import { eventsNames, USDC_ADDRESS } from "./consts";
 import type { TokenABI } from "@/types";
 import type { TransferEvent, ApprovalEvent } from "@/types/TokenABI";
 import { getRedisClient } from "@/lib/redisClient";
+import { replacer } from "@/utils/replacer";
+import { eventHandlerProducer } from "@/services/queue/producer";
+import { IEventListenerData } from "@/interfaces";
 
 type RedisClient = ReturnType<typeof createClient> extends Promise<any>
   ? Awaited<ReturnType<typeof createClient>>
@@ -98,6 +101,7 @@ export class EventListener {
       const currentBlock = await this.provider.getBlockNumber();
 
       const lastProcessedStr = await this.redis.get("lastProcessedBlock");
+      // const lastProcessedStr = "10058259";
       let fromBlock = lastProcessedStr ? Number(lastProcessedStr) + 1 : 0;
 
       if (fromBlock === 0) {
@@ -105,7 +109,10 @@ export class EventListener {
       }
 
       if (fromBlock > currentBlock) {
-        console.info("No historical blocks to process:", { fromBlock, currentBlock });
+        console.info("No historical blocks to process:", {
+          fromBlock,
+          currentBlock,
+        });
         return;
       }
 
@@ -115,51 +122,51 @@ export class EventListener {
       while (fromBlock <= currentBlock) {
         const toBlock = Math.min(fromBlock + this.batchSize - 1, currentBlock);
 
-        const [transferEvents, approvalEvents] = await Promise.all([
-          this.contract.queryFilter(transferFilter, fromBlock, toBlock),
-          this.contract.queryFilter(approvalFilter, fromBlock, toBlock),
-        ]);
+        try {
+          const [transferEvents, approvalEvents] = await Promise.all([
+            this.contract.queryFilter(transferFilter, fromBlock, toBlock),
+            this.contract.queryFilter(approvalFilter, fromBlock, toBlock),
+          ]);
 
-        const allEvents = [...transferEvents, ...approvalEvents].sort((a, b) => {
-          if (a.blockNumber !== b.blockNumber) return a.blockNumber - b.blockNumber;
-        });
+          const allEvents = [...transferEvents, ...approvalEvents].sort(
+            (a, b) => {
+              if (a.blockNumber !== b.blockNumber)
+                return a.blockNumber - b.blockNumber;
+            },
+          );
 
-        for (const e of allEvents) {
-          if (e.eventName === eventsNames.TRANSFER) {
-            const args = e.args as TransferEvent.OutputObject;
-            console.log("HIST Transfer", {
+          for (const e of allEvents) {
+            let handlerData: IEventListenerData = {
+              eventName: e.eventName! as "Transfer" | "Approval",
               blockNumber: e.blockNumber,
-              txHash: e.transactionHash,
-              from: args.from,
-              to: args.to,
-              value: args.value.toString(),
-            });
-          } else if (e.eventName === eventsNames.APPROVAL) {
-            const args = e.args as unknown as ApprovalEvent.OutputObject;
-            console.log("HIST Approval", {
-              blockNumber: e.blockNumber,
-              txHash: e.transactionHash,
-              owner: args.owner,
-              spender: args.spender,
-              value: args.value.toString(),
-            });
-          } else {
-            console.log("HIST Unknown event", e.eventName, e.topics);
+              transactionHash: e.transactionHash,
+              args: e.args as any,
+            };
+            await eventHandlerProducer(handlerData);
           }
+
+          await this.redis.set("lastProcessedBlock", String(toBlock));
+          fromBlock = toBlock + 1;
+        } catch (batchErr: any) {
+          // Rate limit (429) or other transient error - wait and retry
+          const isRateLimit = batchErr?.error?.code === 429;
+          const delay = isRateLimit ? 2000 : 1000;
+          console.warn(
+            `fetchMissedEvents batch error (blocks ${fromBlock}-${toBlock}), retrying in ${delay}ms:`,
+            batchErr.message || batchErr
+          );
+          await new Promise((res) => setTimeout(res, delay));
         }
-
-        await this.redis.set("lastProcessedBlock", String(toBlock));
-
-        fromBlock = toBlock + 1;
       }
     } catch (err) {
       console.error("fetchMissedEvents failed:", err);
+      setTimeout(() => this.fetchMissedEvents(), 5000);
     }
   }
 
   listenForEvents() {
     for (const eventName of Object.values(eventsNames)) {
-      const getFilter = (this.contract.filters)[eventName];
+      const getFilter = this.contract.filters[eventName];
       if (typeof getFilter !== "function") {
         console.warn("Filter not found for event:", eventName);
         continue;
@@ -170,27 +177,35 @@ export class EventListener {
         try {
           const ev = cbArgs[cbArgs.length - 1];
 
-          if (eventName === eventsNames.TRANSFER) {
-            const args = ev.args as TransferEvent.OutputObject;
-            console.log("LIVE Transfer", {
-              blockNumber: ev.log.blockNumber,
-              txHash: ev.log.transactionHash,
-              from: args.from,
-              to: args.to,
-              value: args.value.toString(),
-            });
-          } else if (eventName === eventsNames.APPROVAL) {
-            const args = ev.args as ApprovalEvent.OutputObject;
-            console.log("LIVE Approval", {
-              blockNumber: ev.log.blockNumber,
-              txHash: ev.log.transactionHash,
-              owner: args.owner,
-              spender: args.spender,
-              value: args.value.toString(),
-            });
-          } else {
-            console.log("LIVE unknown event", ev.event ?? ev.topics);
-          }
+          let handlerData: IEventListenerData = {
+            eventName: eventName,
+            blockNumber: ev.log.blockNumber,
+            transactionHash: ev.log.transactionHash,
+            args: ev.args as any,
+          };
+          await eventHandlerProducer(handlerData);
+
+          // if (eventName === eventsNames.TRANSFER) {
+          //   const args = ev.args as TransferEvent.OutputObject;
+          //   console.log("LIVE Transfer", {
+          //     blockNumber: ev.log.blockNumber,
+          //     txHash: ev.log.transactionHash,
+          //     from: args.from,
+          //     to: args.to,
+          //     value: args.value.toString(),
+          //   });
+          // } else if (eventName === eventsNames.APPROVAL) {
+          //   const args = ev.args as ApprovalEvent.OutputObject;
+          //   console.log("LIVE Approval", {
+          //     blockNumber: ev.log.blockNumber,
+          //     txHash: ev.log.transactionHash,
+          //     owner: args.owner,
+          //     spender: args.spender,
+          //     value: args.value.toString(),
+          //   });
+          // } else {
+          //   console.log("LIVE unknown event", ev.event ?? ev.topics);
+          // }
 
           if (typeof ev.blockNumber === "number") {
             await this.redis.set("lastProcessedBlock", String(ev.blockNumber));
