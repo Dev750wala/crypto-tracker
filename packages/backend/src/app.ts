@@ -7,7 +7,7 @@ const app = express();
 const port = config.port;
 
 app.use((req, res, next) => {
-  res.setHeader("Access-Control-Allow-Origin", "https://crypto-tracker-frontend-chi.vercel.app");
+  res.setHeader("Access-Control-Allow-Origin", "https://crypto-tracker-dev.vercel.app");
   res.setHeader("Access-Control-Allow-Methods", "GET, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
   if (req.method === "OPTIONS") {
