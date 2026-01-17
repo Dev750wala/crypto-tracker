@@ -1,135 +1,77 @@
-# Turborepo starter
+# Crypto Event Tracker
 
-This Turborepo starter is maintained by the Turborepo core team.
+Real-time blockchain event tracker for USDC token transfers and approvals on Ethereum Sepolia testnet.
 
-## Using this example
+## Purpose
 
-Run the following command:
+This project monitors USDC smart contract events (Transfer & Approval) in real-time using WebSocket connections to the blockchain. Events are processed through a message queue and streamed to the frontend via Server-Sent Events (SSE).
 
-```sh
-npx create-turbo@latest
-```
+## Tech Stack
 
-## What's inside?
+### Backend
+- **Node.js** + **Express** - API server
+- **TypeScript** - Type safety
+- **Ethers.js** - Blockchain interaction
+- **RabbitMQ** - Message queue for event processing
+- **Redis** - Caching last processed block
+- **Alchemy** - WebSocket RPC provider
 
-This Turborepo includes the following packages/apps:
+### Frontend
+- **React** - UI library
+- **Vite** - Build tool
+- **TypeScript** - Type safety
+- **SSE (EventSource)** - Real-time event streaming
 
-### Apps and Packages
+### Infrastructure
+- **Turborepo** - Monorepo management
 
-- `docs`: a [Next.js](https://nextjs.org/) app
-- `web`: another [Next.js](https://nextjs.org/) app
-- `@repo/ui`: a stub React component library shared by both `web` and `docs` applications
-- `@repo/eslint-config`: `eslint` configurations (includes `eslint-config-next` and `eslint-config-prettier`)
-- `@repo/typescript-config`: `tsconfig.json`s used throughout the monorepo
-
-Each package/app is 100% [TypeScript](https://www.typescriptlang.org/).
-
-### Utilities
-
-This Turborepo has some additional tools already setup for you:
-
-- [TypeScript](https://www.typescriptlang.org/) for static type checking
-- [ESLint](https://eslint.org/) for code linting
-- [Prettier](https://prettier.io) for code formatting
-
-### Build
-
-To build all apps and packages, run the following command:
+## Project Structure
 
 ```
-cd my-turborepo
-
-# With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended)
-turbo build
-
-# Without [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation), use your package manager
-npx turbo build
-yarn dlx turbo build
-pnpm exec turbo build
+packages/
+├── backend/          # Express API + Event Listener
+│   └── src/
+│       ├── app.ts              # Express server with SSE endpoint
+│       ├── web3/               # Blockchain event listener
+│       └── services/queue/     # RabbitMQ producer/consumer
+└── frontend/         # React app
+    └── src/
+        ├── App.tsx             # Main UI
+        └── hooks/useSSE.ts     # SSE hook for real-time updates
 ```
 
-You can build a specific package by using a [filter](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters):
+## How It Works
 
-```
-# With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended)
-turbo build --filter=docs
+1. **Event Listener** connects to Ethereum via WebSocket and listens for USDC contract events
+2. **Producer** publishes events to RabbitMQ with routing keys (`event.transfer`, `event.approval`)
+3. **Consumer** subscribes to events based on user selection (Transfer, Approval, or All)
+4. **SSE Endpoint** streams events to the frontend in real-time
+5. **React App** displays events as they arrive
 
-# Without [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation), use your package manager
-npx turbo build --filter=docs
-yarn exec turbo build --filter=docs
-pnpm exec turbo build --filter=docs
-```
+## Running Locally
 
-### Develop
+```bash
+# Install dependencies
+yarn install
 
-To develop all apps and packages, run the following command:
+# Start backend
+yarn backend dev
 
-```
-cd my-turborepo
-
-# With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended)
-turbo dev
-
-# Without [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation), use your package manager
-npx turbo dev
-yarn exec turbo dev
-pnpm exec turbo dev
+# Start frontend
+yarn frontend dev
 ```
 
-You can develop a specific package by using a [filter](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters):
+## Environment Variables
 
+### Backend (.env.local)
 ```
-# With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended)
-turbo dev --filter=web
-
-# Without [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation), use your package manager
-npx turbo dev --filter=web
-yarn exec turbo dev --filter=web
-pnpm exec turbo dev --filter=web
+RPC_WSS_URL=wss://eth-sepolia.g.alchemy.com/v2/YOUR_KEY
+REDIS_URL=redis://localhost:6379
+RABBITMQ_URL=amqp://localhost
+PORT=3000
 ```
 
-### Remote Caching
-
-> [!TIP]
-> Vercel Remote Cache is free for all plans. Get started today at [vercel.com](https://vercel.com/signup?/signup?utm_source=remote-cache-sdk&utm_campaign=free_remote_cache).
-
-Turborepo can use a technique known as [Remote Caching](https://turborepo.dev/docs/core-concepts/remote-caching) to share cache artifacts across machines, enabling you to share build caches with your team and CI/CD pipelines.
-
-By default, Turborepo will cache locally. To enable Remote Caching you will need an account with Vercel. If you don't have an account you can [create one](https://vercel.com/signup?utm_source=turborepo-examples), then enter the following commands:
-
+### Frontend (.env)
 ```
-cd my-turborepo
-
-# With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended)
-turbo login
-
-# Without [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation), use your package manager
-npx turbo login
-yarn exec turbo login
-pnpm exec turbo login
+VITE_API_URL=http://localhost:3000
 ```
-
-This will authenticate the Turborepo CLI with your [Vercel account](https://vercel.com/docs/concepts/personal-accounts/overview).
-
-Next, you can link your Turborepo to your Remote Cache by running the following command from the root of your Turborepo:
-
-```
-# With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended)
-turbo link
-
-# Without [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation), use your package manager
-npx turbo link
-yarn exec turbo link
-pnpm exec turbo link
-```
-
-## Useful Links
-
-Learn more about the power of Turborepo:
-
-- [Tasks](https://turborepo.dev/docs/crafting-your-repository/running-tasks)
-- [Caching](https://turborepo.dev/docs/crafting-your-repository/caching)
-- [Remote Caching](https://turborepo.dev/docs/core-concepts/remote-caching)
-- [Filtering](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters)
-- [Configuration Options](https://turborepo.dev/docs/reference/configuration)
-- [CLI Usage](https://turborepo.dev/docs/reference/command-line-reference)
