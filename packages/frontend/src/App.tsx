@@ -4,10 +4,12 @@ import './App.css';
 
 type EventType = 'Transfer' | 'Approval' | 'All';
 
+const API_URL = import.meta.env.VITE_API_URL || '';
+
 function App() {
   const [eventType, setEventType] = useState<EventType | null>(null);
 
-  const url = eventType ? `/api/consume?type=${eventType}` : null;
+  const url = eventType ? `${API_URL}/consume?type=${eventType}` : null;
   const { events, status, error, isConnected, clearEvents } = useSSE(url);
 
   const handleTypeSelect = (type: EventType) => {
