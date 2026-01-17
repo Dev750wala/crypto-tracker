@@ -242,8 +242,21 @@ export class EventListener {
   }
 }
 
+let listenerInstance: EventListener | null = null;
+let listenerPromise: Promise<EventListener> | null = null;
+
 export const startEventListener = async () => {
-  await EventListener.create();
+  if (listenerInstance) {
+    return listenerInstance;
+  }
+  
+  if (listenerPromise) {
+    return listenerPromise;
+  }
+  
+  listenerPromise = EventListener.create();
+  listenerInstance = await listenerPromise;
+  return listenerInstance;
 };
 
 // startEventListener().catch(console.error);
