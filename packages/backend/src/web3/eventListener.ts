@@ -5,9 +5,7 @@ import { config } from "@/config";
 import { TokenABI__factory } from "@/types/factories";
 import { eventsNames, USDC_ADDRESS } from "./consts";
 import type { TokenABI } from "@/types";
-import type { TransferEvent, ApprovalEvent } from "@/types/TokenABI";
-import { getRedisClient } from "@/lib/redisClient";
-import { replacer } from "@/utils/replacer";
+// import { getRedisClient } from "@/lib/redisClient";
 import { eventHandlerProducer } from "@/services/queue/producer";
 import { IEventListenerData } from "@/interfaces";
 
@@ -33,7 +31,7 @@ export class EventListener {
   }
 
   private async init() {
-    this.redis = await getRedisClient();
+    // this.redis = await getRedisClient();
 
     await this.setupProviderAndContract();
     // await this.fetchMissedEvents();
