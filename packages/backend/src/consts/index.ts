@@ -4,4 +4,5 @@ export const routingKeys = {
     EVENT: 'event',
     TRANSFER: 'transfer',
     APPROVAL: 'approval',
+    ALL: 'all',
 }

@@ -1,6 +1,7 @@
 import express from "express";
 import { config } from "@/config";
 import { eventConsumer } from "@/services/queue/consumer";
+import { startEventListener } from "./web3/eventListener";
 
 const app = express();
 const port = config.port;
@@ -28,6 +29,12 @@ app.get("/consume", async (req, res) => {
   res.setHeader("Cache-Control", "no-cache");
   res.setHeader("Connection", "keep-alive");
 
+  res.write("data: wait till we set up the listener...\n\n");
+
+  await startEventListener()
+
+  res.write("data: listener set up. waiting for events...\n\n");
+
   const cleanup = await eventConsumer(
     eventName as "Transfer" | "Approval" | "All",
     (data) => {
@@ -38,7 +45,6 @@ app.get("/consume", async (req, res) => {
     }
   );
 
-  // Clean up when client disconnects
   req.on("close", () => {
     cleanup();
   });

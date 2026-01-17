@@ -244,8 +244,8 @@ export class EventListener {
   }
 }
 
-const main = async () => {
+export const startEventListener = async () => {
   await EventListener.create();
 };
 
-main().catch(console.error);
+// startEventListener().catch(console.error);

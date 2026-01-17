@@ -8,7 +8,7 @@ function App() {
   const [eventType, setEventType] = useState<EventType | null>(null);
 
   const url = eventType ? `/api/consume?type=${eventType}` : null;
-  const { events, error, isConnected, clearEvents } = useSSE(url);
+  const { events, status, error, isConnected, clearEvents } = useSSE(url);
 
   const handleTypeSelect = (type: EventType) => {
     if (eventType === type) {
@@ -52,14 +52,16 @@ function App() {
 
       {error && <div className="error">{error}</div>}
 
+      {status && <div className="status-message">{status}</div>}
+
       <div className="events-container">
-        {events.length === 0 ? (
+        {events.length === 0 && !status ? (
           <div className="empty-state">
             {eventType
               ? 'Waiting for events...'
               : 'Select an event type to start listening'}
           </div>
-        ) : (
+        ) : events.length === 0 ? null : (
           events.map((event, index) => (
             <EventCard key={`${event.transactionHash}-${index}`} event={event} />
           ))

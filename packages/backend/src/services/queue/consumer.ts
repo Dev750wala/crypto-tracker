@@ -15,8 +15,8 @@ export async function eventConsumer(
     eventName === "Transfer"
       ? `${EVENT}.${TRANSFER}`
       : eventName === "Approval"
-      ? `${EVENT}.${APPROVAL}`
-      : `${EVENT}.#`;
+        ? `${EVENT}.${APPROVAL}`
+        : `${EVENT}.#`;
 
   const { exchange } = await channel.assertExchange(handlerExchange, "topic", {
     durable: false,

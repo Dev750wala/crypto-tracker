@@ -13,26 +13,19 @@ export async function eventHandlerProducer(data: IEventListenerData) {
     data.eventName === "Transfer"
       ? `${EVENT}.${TRANSFER}`
       : `${EVENT}.${APPROVAL}`;
-  const allRoutingKey = `${EVENT}.#`;
 
   const { exchange } = await channel.assertExchange(handlerExchange, "topic", {
     durable: false,
   });
 
-  if (data.eventName === "Transfer") {
-    console.log(" [x] Sent %s: %o", routingKey, data);
-    channel.publish(exchange, routingKey, Buffer.from(JSON.stringify(data, replacer)), {
+  console.log(" [x] Sent %s: %o", routingKey, data);
+  channel.publish(
+    exchange,
+    routingKey,
+    Buffer.from(JSON.stringify(data, replacer)),
+    {
       persistent: false,
       correlationId: data.transactionHash,
-    });
-  } else if (data.eventName === "Approval") {
-    console.log(" [x] Sent %s: %o", routingKey, data);
-    channel.publish(exchange, routingKey, Buffer.from(JSON.stringify(data, replacer)), {
-      persistent: false,
-      correlationId: data.transactionHash,
-    });
-  }
-  channel.publish(exchange, allRoutingKey, Buffer.from(JSON.stringify(data, replacer)), {
-    persistent: false,
-  });
+    },
+  );
 }

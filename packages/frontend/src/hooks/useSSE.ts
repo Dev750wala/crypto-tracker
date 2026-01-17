@@ -9,6 +9,7 @@ export interface EventData {
 
 interface UseSSEReturn {
   events: EventData[];
+  status: string | null;
   error: string | null;
   isConnected: boolean;
   clearEvents: () => void;
@@ -16,6 +17,7 @@ interface UseSSEReturn {
 
 export function useSSE(url: string | null): UseSSEReturn {
   const [events, setEvents] = useState<EventData[]>([]);
+  const [status, setStatus] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isConnected, setIsConnected] = useState(false);
 
@@ -26,6 +28,7 @@ export function useSSE(url: string | null): UseSSEReturn {
   useEffect(() => {
     if (!url) {
       setIsConnected(false);
+      setStatus(null);
       return;
     }
 
@@ -34,23 +37,38 @@ export function useSSE(url: string | null): UseSSEReturn {
     eventSource.onopen = () => {
       setIsConnected(true);
       setError(null);
+      setStatus('Connecting...');
     };
 
     eventSource.onmessage = (event) => {
-      const newData: EventData = JSON.parse(event.data);
-      setEvents((prev) => [newData, ...prev].slice(0, 100));
+      const data = event.data;
+
+      console.log(data);
+      
+      
+      try {
+        const parsed = JSON.parse(data);
+        if (parsed.eventName) {
+          setStatus(null);
+          setEvents((prev) => [parsed, ...prev].slice(0, 100));
+        }
+      } catch {
+        setStatus(data);
+      }
     };
 
     eventSource.onerror = () => {
       setError('Connection lost. Trying to reconnect...');
       setIsConnected(false);
+      setStatus(null);
     };
 
     return () => {
       eventSource.close();
       setIsConnected(false);
+      setStatus(null);
     };
   }, [url]);
 
-  return { events, error, isConnected, clearEvents };
+  return { events, status, error, isConnected, clearEvents };
 }
