@@ -1,4 +1,3 @@
-// src/web3/EventListener.ts
 import { createClient } from "redis";
 import { ethers } from "ethers";
 import { config } from "@/config";
